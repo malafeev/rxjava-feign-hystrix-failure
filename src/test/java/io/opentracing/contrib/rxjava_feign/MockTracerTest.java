@@ -13,6 +13,7 @@ import feign.opentracing.FeignSpanDecorator;
 import feign.opentracing.TracingClient;
 import feign.opentracing.hystrix.TracingConcurrencyStrategy;
 import io.opentracing.Tracer;
+import io.opentracing.mock.MockSpan;
 import io.opentracing.mock.MockTracer;
 import io.opentracing.mock.MockTracer.Propagator;
 import io.opentracing.rxjava.TracingRxJavaUtils;
@@ -20,7 +21,10 @@ import io.opentracing.util.GlobalTracer;
 import io.opentracing.util.ThreadLocalActiveSpanSource;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
@@ -69,11 +73,15 @@ public class MockTracerTest {
     logger.info("finished spans: {}", mockTracer.finishedSpans().size());
 
     // let's wait and print finished spans in a loop
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
       TimeUnit.MILLISECONDS.sleep(500);
       logger.info("finished spans: {}", mockTracer.finishedSpans().size());
     }
 
+    List<MockSpan> spans = mockTracer.finishedSpans();
+    Set<Long> traceIds = spans.stream().map(span -> span.context().traceId())
+        .collect(Collectors.toSet());
+    logger.info("there are {} traces with ids: {}", traceIds.size(), traceIds);
   }
 
 
