@@ -73,12 +73,14 @@ public class MockTracerTest {
     logger.info("finished spans: {}", mockTracer.finishedSpans().size());
 
     // let's wait and print finished spans in a loop
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       TimeUnit.MILLISECONDS.sleep(500);
       logger.info("finished spans: {}", mockTracer.finishedSpans().size());
     }
 
     List<MockSpan> spans = mockTracer.finishedSpans();
+    sort(spans);
+
     Set<Long> traceIds = spans.stream().map(span -> span.context().traceId())
         .collect(Collectors.toSet());
     logger.info("there are {} traces with ids: {}", traceIds.size(), traceIds);
@@ -91,6 +93,15 @@ public class MockTracerTest {
             Collections.singletonList(new FeignSpanDecorator.StandardTags())))
         .retryer(new Retryer.Default(100, SECONDS.toMillis(1), 2))
         .build();
+  }
+
+  private void sort(List<MockSpan> spans) {
+    spans.sort((o1, o2) -> {
+      if (o1.context().traceId() == o2.context().traceId()) {
+        return Long.compare(o1.context().spanId(), o2.context().spanId());
+      }
+      return Long.compare(o1.context().traceId(), o2.context().traceId());
+    });
   }
 
   interface StringEntityRequest {
